@@ -167,19 +167,19 @@ export class MDPlanParser {
         const lower = invalidStatus.toLowerCase().trim();
 
         if (lower === 'done' || lower === 'complete' || lower === 'completed') {
-            return '[x]';
+            return TaskStatus.Done;
         }
         if (lower === 'progress' || lower === 'in progress' || lower === 'doing' || lower === 'wip') {
-            return '[wip]';
+            return TaskStatus.InProgress;
         }
         if (lower === 'blocked' || lower === 'block' || lower === 'waiting') {
-            return '[blocked]';
+            return TaskStatus.Blocked;
         }
         if (lower === 'todo' || lower === 'planned' || lower === '' || lower === ' ') {
-            return '[ ]';
+            return TaskStatus.Planned;
         }
 
         // Default to planned
-        return '[ ]';
+        return TaskStatus.Planned;
     }
 }

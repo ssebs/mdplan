@@ -125,20 +125,10 @@ export function activate(context: vscode.ExtensionContext) {
 	const addTaskCommand = vscode.commands.registerCommand(COMMANDS.ADD_TASK, MDPlanCommands.addTask);
 	const moveTaskCommand = vscode.commands.registerCommand(COMMANDS.MOVE_TASK, MDPlanCommands.moveTask);
 	const changeStatusCommand = vscode.commands.registerCommand(COMMANDS.CHANGE_STATUS, MDPlanCommands.changeStatus);
-	const deleteTaskCommand = vscode.commands.registerCommand(COMMANDS.DELETE_TASK, MDPlanCommands.deleteTask);
 	const addTaskDetailsCommand = vscode.commands.registerCommand(COMMANDS.ADD_TASK_DETAILS, MDPlanCommands.addTaskDetails);
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
-	const disposable = vscode.commands.registerCommand(COMMANDS.HELLO_WORLD, () => {
-		// The code you place here will be executed every time your command is executed
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World from mdplan!');
-	});
 
 	context.subscriptions.push(
-		disposable,
 		diagnostics,
 		decorations,
 		codeActionProvider,
@@ -151,7 +141,6 @@ export function activate(context: vscode.ExtensionContext) {
 		addTaskCommand,
 		moveTaskCommand,
 		changeStatusCommand,
-		deleteTaskCommand,
 		addTaskDetailsCommand
 	);
 }

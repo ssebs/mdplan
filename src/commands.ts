@@ -37,6 +37,7 @@ export class MDPlanCommands {
         await vscode.workspace.applyEdit(edit);
     }
 
+    // TODO: fixme
     static async moveTask(uri: vscode.Uri, taskLine: number, sections: Section[]): Promise<void> {
         const document = await vscode.workspace.openTextDocument(uri);
         await vscode.window.showTextDocument(document);
@@ -137,39 +138,6 @@ export class MDPlanCommands {
 
         const edit = new vscode.WorkspaceEdit();
         edit.replace(uri, line.range, newText);
-        await vscode.workspace.applyEdit(edit);
-    }
-
-    static async deleteTask(uri: vscode.Uri, taskLine: number): Promise<void> {
-        const document = await vscode.workspace.openTextDocument(uri);
-        await vscode.window.showTextDocument(document);
-
-        // Get the task block (task + all nested content)
-        const taskBlock = getTaskBlock(document, taskLine);
-        if (!taskBlock) {
-            vscode.window.showWarningMessage('Could not identify task block');
-            return;
-        }
-
-        // Confirm deletion
-        const taskText = document.lineAt(taskLine).text.trim();
-        const confirm = await vscode.window.showWarningMessage(
-            `Delete task: "${taskText}"?`,
-            { modal: true },
-            'Delete'
-        );
-
-        if (confirm !== 'Delete') {
-            return;
-        }
-
-        const edit = new vscode.WorkspaceEdit();
-        const deleteRange = new vscode.Range(
-            new vscode.Position(taskBlock.startLine, 0),
-            new vscode.Position(taskBlock.endLine + 1, 0)
-        );
-        edit.delete(uri, deleteRange);
-
         await vscode.workspace.applyEdit(edit);
     }
 

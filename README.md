@@ -4,6 +4,9 @@ A VSCode extension for Kanban-style planning using raw markdown files instead of
 
 TODO:
 - when you click in the checkbox text (anywhere in [ ]) it should popup a menu to select the new status, like a dropdown menu
+- Typing subbullets opens action menu
+- Cleanup
+- Move doesn't work
 
 ## Quick Start
 

@@ -1,7 +1,7 @@
 {
   "name": "mdplan",
   "displayName": "mdplan",
-  "description": "Planning tool built into a Markdown file.",
+  "description": "Task pretest tool built into a Markdown file.",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.106.1"
@@ -16,10 +16,6 @@
   "contributes": {
     "commands": [
       {
-        "command": "mdplan.helloWorld",
-        "title": "Hello World"
-      },
-      {
         "command": "mdplan.addTask",
         "title": "MDPlan: Add Task"
       },
@@ -30,10 +26,6 @@
       {
         "command": "mdplan.changeStatus",
         "title": "MDPlan: Change Task Status"
-      },
-      {
-        "command": "mdplan.deleteTask",
-        "title": "MDPlan: Delete Task"
       },
       {
         "command": "mdplan.addTaskDetails",

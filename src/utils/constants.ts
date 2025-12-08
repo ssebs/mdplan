@@ -32,9 +32,7 @@ export const COMMANDS = {
 	ADD_TASK: 'mdplan.addTask',
 	MOVE_TASK: 'mdplan.moveTask',
 	CHANGE_STATUS: 'mdplan.changeStatus',
-	DELETE_TASK: 'mdplan.deleteTask',
 	ADD_TASK_DETAILS: 'mdplan.addTaskDetails',
-	HELLO_WORLD: 'mdplan.helloWorld'
 } as const;
 
 /**
