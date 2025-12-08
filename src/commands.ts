@@ -1,10 +1,7 @@
 import * as vscode from 'vscode';
-
-interface Section {
-    name: string;
-    line: number;
-    range: vscode.Range;
-}
+import { Section, TaskBlock } from './utils/types';
+import { REGEX_PATTERNS, SECTION_NAMES, INDENTATION } from './utils/constants';
+import { getTaskBlock, findOrCreateDoneSection, createTimestamp } from './utils/sectionUtils';
 
 export class MDPlanCommands {
 
@@ -42,7 +39,7 @@ export class MDPlanCommands {
 
     static async moveTask(uri: vscode.Uri, taskLine: number, sections: Section[]): Promise<void> {
         const document = await vscode.workspace.openTextDocument(uri);
-        const editor = await vscode.window.showTextDocument(document);
+        await vscode.window.showTextDocument(document);
 
         if (sections.length === 0) {
             vscode.window.showWarningMessage('No sections found in document');
@@ -50,7 +47,7 @@ export class MDPlanCommands {
         }
 
         // Get the task block (task + all nested content)
-        const taskBlock = MDPlanCommands.getTaskBlock(document, taskLine);
+        const taskBlock = getTaskBlock(document, taskLine);
         if (!taskBlock) {
             vscode.window.showWarningMessage('Could not identify task block');
             return;
@@ -102,7 +99,7 @@ export class MDPlanCommands {
 
     static async changeStatus(uri: vscode.Uri, taskLine: number): Promise<void> {
         const document = await vscode.workspace.openTextDocument(uri);
-        const editor = await vscode.window.showTextDocument(document);
+        await vscode.window.showTextDocument(document);
 
         const line = document.lineAt(taskLine);
         const taskRegex = /^(\s*-\s+)\[([^\]]*)\](\s+.*)$/;
@@ -145,10 +142,10 @@ export class MDPlanCommands {
 
     static async deleteTask(uri: vscode.Uri, taskLine: number): Promise<void> {
         const document = await vscode.workspace.openTextDocument(uri);
-        const editor = await vscode.window.showTextDocument(document);
+        await vscode.window.showTextDocument(document);
 
         // Get the task block (task + all nested content)
-        const taskBlock = MDPlanCommands.getTaskBlock(document, taskLine);
+        const taskBlock = getTaskBlock(document, taskLine);
         if (!taskBlock) {
             vscode.window.showWarningMessage('Could not identify task block');
             return;
@@ -188,7 +185,7 @@ export class MDPlanCommands {
         }
 
         const baseIndent = taskMatch[1];
-        const detailIndent = baseIndent + '  ';
+        const detailIndent = baseIndent + ' '.repeat(INDENTATION.SPACES_PER_LEVEL);
 
         // Define detail type options
         const detailTypes = [
@@ -252,8 +249,7 @@ export class MDPlanCommands {
                 break;
 
             case 'comment-timestamp':
-                const date = new Date();
-                const timestamp = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+                const timestamp = createTimestamp();
                 insertText = `${detailIndent}> `;
                 const commentText = ` @${timestamp}`;
                 cursorOffset = insertText.length;
@@ -261,8 +257,7 @@ export class MDPlanCommands {
                 break;
 
             case 'comment-user':
-                const dateUser = new Date();
-                const timestampUser = `${dateUser.getFullYear()}-${String(dateUser.getMonth() + 1).padStart(2, '0')}-${String(dateUser.getDate()).padStart(2, '0')}`;
+                const timestampUser = createTimestamp();
                 insertText = `${detailIndent}> `;
                 const commentWithUser = ` @${timestampUser} - @`;
                 cursorOffset = insertText.length;
@@ -293,14 +288,14 @@ export class MDPlanCommands {
 
     private static async moveTaskToDone(uri: vscode.Uri, taskLine: number, document: vscode.TextDocument): Promise<void> {
         // Get the task block
-        const taskBlock = MDPlanCommands.getTaskBlock(document, taskLine);
+        const taskBlock = getTaskBlock(document, taskLine);
         if (!taskBlock) {
             vscode.window.showWarningMessage('Could not identify task block');
             return;
         }
 
         // Find or create the Done section
-        const doneSection = MDPlanCommands.findOrCreateDoneSection(document);
+        const doneSection = findOrCreateDoneSection(document);
 
         // Update task status to [x]
         const taskText = document.lineAt(taskLine).text;
@@ -314,8 +309,7 @@ export class MDPlanCommands {
         const updatedTaskLine = `${prefix}[x]${suffix}`;
 
         // Create timestamp comment
-        const date = new Date();
-        const timestamp = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        const timestamp = createTimestamp();
         const commentLine = `  > completed @${timestamp}`;
 
         // Build the new task block with timestamp
@@ -341,107 +335,5 @@ export class MDPlanCommands {
         edit.insert(uri, insertPosition, newTaskBlock);
 
         await vscode.workspace.applyEdit(edit);
-    }
-
-    private static findOrCreateDoneSection(document: vscode.TextDocument): { insertLine: number, sectionLine: number } {
-        const sectionRegex = /^##\s+(.+)/;
-        let doneSectionLine = -1;
-        let firstSectionLine = -1;
-        let insertLine = -1;
-
-        // Look for existing Done section and track first section
-        for (let i = 0; i < document.lineCount; i++) {
-            const line = document.lineAt(i).text;
-            const match = line.match(sectionRegex);
-
-            if (match) {
-                const sectionName = match[1].trim().toLowerCase();
-
-                // Track first section for insertion if we need to create Done
-                if (firstSectionLine === -1) {
-                    firstSectionLine = i;
-                }
-
-                // Check for Done section (case-insensitive, with or without brackets)
-                if (sectionName === 'done' || sectionName === '[done]') {
-                    doneSectionLine = i;
-
-                    // Find insertion point after section header and optional description
-                    insertLine = i + 1;
-
-                    // Skip description if exists
-                    if (insertLine < document.lineCount && document.lineAt(insertLine).text.trim().startsWith('>')) {
-                        insertLine++;
-                    }
-
-                    break;
-                }
-            }
-        }
-
-        // If Done section exists, return insertion point
-        if (doneSectionLine !== -1) {
-            return { insertLine, sectionLine: doneSectionLine };
-        }
-
-        // Done section doesn't exist - we need to return where it should be inserted
-        // For now, just return the line after the first section as a fallback
-        // In a full implementation, you might want to create the section or prompt the user
-        if (firstSectionLine !== -1) {
-            return { insertLine: firstSectionLine + 1, sectionLine: -1 };
-        }
-
-        // No sections found at all - insert at beginning
-        return { insertLine: 0, sectionLine: -1 };
-    }
-
-    private static getTaskBlock(document: vscode.TextDocument, taskLine: number): { startLine: number, endLine: number, text: string } | null {
-        const taskText = document.lineAt(taskLine).text;
-        const taskMatch = taskText.match(/^(\s*)-\s+\[/);
-        if (!taskMatch) {
-            return null;
-        }
-
-        const baseIndent = taskMatch[1].length;
-        let endLine = taskLine;
-        const lines: string[] = [taskText];
-
-        // Find all lines that belong to this task (indented content below)
-        for (let i = taskLine + 1; i < document.lineCount; i++) {
-            const line = document.lineAt(i).text;
-
-            // Empty lines are part of the block
-            if (line.trim() === '') {
-                lines.push(line);
-                endLine = i;
-                continue;
-            }
-
-            // If it's another task at the same level, stop
-            if (line.match(/^(\s*)-\s+\[/) && line.match(/^(\s*)/)?.[1].length === baseIndent) {
-                break;
-            }
-
-            // If it's a section header, stop
-            if (line.match(/^##\s+/)) {
-                break;
-            }
-
-            // If line is indented more than base, it's part of this task
-            const lineIndent = line.match(/^(\s*)/)?.[1].length || 0;
-            if (lineIndent > baseIndent || line.trim().startsWith('>')) {
-                lines.push(line);
-                endLine = i;
-            } else {
-                // Line is at same or less indentation and not a task - stop
-                break;
-            }
-        }
-
-        return {
-            startLine: taskLine,
-            endLine,
-            text: lines.join('\n') + '\n'
-        };
     }
 }

@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { INDENTATION } from './utils/constants';
 
 export class MDPlanCodeActionProvider implements vscode.CodeActionProvider {
 
@@ -100,10 +101,11 @@ export class MDPlanCodeActionProvider implements vscode.CodeActionProvider {
         const line = document.lineAt(diagnostic.range.start.line);
         const text = line.text;
 
-        // Remove excessive indentation (keep only 2 spaces)
+        // Remove excessive indentation (keep only configured spaces per level)
         const taskMatch = text.match(/^\s*(-\s+\[.*)/);
         if (taskMatch) {
-            const newText = '  ' + taskMatch[1];
+            const indent = ' '.repeat(INDENTATION.SPACES_PER_LEVEL);
+            const newText = indent + taskMatch[1];
             edit.replace(document.uri, line.range, newText);
         }
         action.edit = edit;
@@ -125,8 +127,9 @@ export class MDPlanCodeActionProvider implements vscode.CodeActionProvider {
         const line = document.lineAt(diagnostic.range.start.line);
         const text = line.text;
 
-        // Add 2 spaces of indentation
-        const newText = '  ' + text.trimStart();
+        // Add configured indentation
+        const indent = ' '.repeat(INDENTATION.SPACES_PER_LEVEL);
+        const newText = indent + text.trimStart();
         edit.replace(document.uri, line.range, newText);
         action.edit = edit;
 

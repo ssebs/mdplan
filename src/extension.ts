@@ -4,6 +4,7 @@ import { MDPlanCodeActionProvider } from './codeActions';
 import { MDPlanCodeLensProvider } from './codeLens';
 import { MDPlanCommands } from './commands';
 import { MDPlanDecorations } from './decorations';
+import { COMMANDS } from './utils/constants';
 
 function isBlankDocument(doc: vscode.TextDocument): boolean {
 	const text = doc.getText().trim();
@@ -121,16 +122,16 @@ export function activate(context: vscode.ExtensionContext) {
 	updateDecorations();
 
 	// Register commands
-	const addTaskCommand = vscode.commands.registerCommand('mdplan.addTask', MDPlanCommands.addTask);
-	const moveTaskCommand = vscode.commands.registerCommand('mdplan.moveTask', MDPlanCommands.moveTask);
-	const changeStatusCommand = vscode.commands.registerCommand('mdplan.changeStatus', MDPlanCommands.changeStatus);
-	const deleteTaskCommand = vscode.commands.registerCommand('mdplan.deleteTask', MDPlanCommands.deleteTask);
-	const addTaskDetailsCommand = vscode.commands.registerCommand('mdplan.addTaskDetails', MDPlanCommands.addTaskDetails);
+	const addTaskCommand = vscode.commands.registerCommand(COMMANDS.ADD_TASK, MDPlanCommands.addTask);
+	const moveTaskCommand = vscode.commands.registerCommand(COMMANDS.MOVE_TASK, MDPlanCommands.moveTask);
+	const changeStatusCommand = vscode.commands.registerCommand(COMMANDS.CHANGE_STATUS, MDPlanCommands.changeStatus);
+	const deleteTaskCommand = vscode.commands.registerCommand(COMMANDS.DELETE_TASK, MDPlanCommands.deleteTask);
+	const addTaskDetailsCommand = vscode.commands.registerCommand(COMMANDS.ADD_TASK_DETAILS, MDPlanCommands.addTaskDetails);
 
 	// The command has been defined in the package.json file
 	// Now provide the implementation of the command with registerCommand
 	// The commandId parameter must match the command field in package.json
-	const disposable = vscode.commands.registerCommand('mdplan.helloWorld', () => {
+	const disposable = vscode.commands.registerCommand(COMMANDS.HELLO_WORLD, () => {
 		// The code you place here will be executed every time your command is executed
 		// Display a message box to the user
 		vscode.window.showInformationMessage('Hello World from mdplan!');

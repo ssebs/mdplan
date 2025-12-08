@@ -1,20 +1,16 @@
 import * as vscode from 'vscode';
 import { MDPlanParser } from './parser';
-
-interface Section {
-    name: string;
-    line: number;
-    range: vscode.Range;
-}
+import { REGEX_PATTERNS, COMMANDS } from './utils/constants';
+import { getIndentLevel } from './utils/sectionUtils';
 
 export class MDPlanDecorations {
     private actionDecorationType: vscode.TextEditorDecorationType;
 
     constructor() {
-        // Create decoration that appears on hover at the far right
-        // Using minimal, subtle styling that doesn't interfere with content
+        // Create decoration showing ellipsis at the end of tasks
         this.actionDecorationType = vscode.window.createTextEditorDecorationType({
             after: {
+                contentText: '...',
                 margin: '0 0 0 2em',
                 color: new vscode.ThemeColor('editorCodeLens.foreground'),
             },
@@ -38,16 +34,9 @@ export class MDPlanDecorations {
                 const lineEndPos = new vscode.Position(task.line, line.text.length);
                 const range = new vscode.Range(lineEndPos, lineEndPos);
 
-                // Show action icons that are clickable
                 decorations.push({
                     range,
-                    renderOptions: {
-                        after: {
-                            contentText: '$(ellipsis)',
-                            margin: '0 0 0 2em',
-                        }
-                    },
-                    hoverMessage: new vscode.MarkdownString('$(check) **Status** | $(arrow-both) **Move** | $(add) **Add Details**\n\n*Click to show actions*')
+                    hoverMessage: 'Click to add description or modify task'
                 });
             }
         }
@@ -65,14 +54,13 @@ export class MDPlanDecorations {
 
     private findTasks(document: vscode.TextDocument): Array<{ line: number; indentLevel: number }> {
         const tasks: Array<{ line: number; indentLevel: number }> = [];
-        const taskRegex = /^(\s*)-\s+\[([^\]]*)\]\s*(.*)/;
 
         for (let i = 0; i < document.lineCount; i++) {
             const line = document.lineAt(i);
-            const match = line.text.match(taskRegex);
+            const match = line.text.match(REGEX_PATTERNS.TASK);
             if (match) {
                 const indent = match[1] || '';
-                const indentLevel = Math.floor(indent.length / 2);
+                const indentLevel = getIndentLevel(indent);
                 tasks.push({ line: i, indentLevel });
             }
         }
@@ -80,74 +68,39 @@ export class MDPlanDecorations {
         return tasks;
     }
 
-    private findSections(document: vscode.TextDocument): Section[] {
-        const sections: Section[] = [];
-        const sectionRegex = /^##\s+(.+)/;
-
-        for (let i = 0; i < document.lineCount; i++) {
-            const line = document.lineAt(i);
-            const match = line.text.match(sectionRegex);
-            if (match) {
-                sections.push({
-                    name: match[1],
-                    line: i,
-                    range: line.range
-                });
-            }
-        }
-
-        return sections;
-    }
-
-    public handleClick(editor: vscode.TextEditor, position: vscode.Position): void {
+    public async handleClick(editor: vscode.TextEditor, position: vscode.Position): Promise<void> {
         const line = editor.document.lineAt(position.line);
-        const taskRegex = /^(\s*)-\s+\[([^\]]*)\]\s*(.*)/;
 
-        if (!taskRegex.test(line.text)) {
+        if (!REGEX_PATTERNS.TASK.test(line.text)) {
             return;
         }
 
-        // Calculate which icon was clicked based on position
+        // Find the checkbox position in the line
+        const checkboxMatch = line.text.match(/^(\s*-\s+)(\[[^\]]*\])/);
+        if (checkboxMatch) {
+            const checkboxStart = checkboxMatch[1].length;
+            const checkboxEnd = checkboxStart + checkboxMatch[2].length;
+
+            // Check if click was on the checkbox
+            if (position.character >= checkboxStart && position.character <= checkboxEnd) {
+                await this.cycleTaskStatus(editor, position.line);
+                return;
+            }
+        }
+
+        // Calculate if click was in the decoration area (after the line end)
         const lineEndPos = line.text.length;
         const clickOffset = position.character - lineEndPos;
 
-        // If click is within the decoration area (after the line end)
+        // If click is within the decoration area (the "..." part)
         if (clickOffset >= 0) {
-            // Show a quick pick menu with all actions
-            this.showActionMenu(editor, position.line);
+            // Directly call "Add Description" command
+            await vscode.commands.executeCommand(COMMANDS.ADD_TASK_DETAILS, editor.document.uri, position.line);
         }
     }
 
-    private async showActionMenu(editor: vscode.TextEditor, line: number): Promise<void> {
-        const sections = this.findSections(editor.document);
-
-        const actions = [
-            {
-                label: '$(check) Change Status',
-                description: 'Update task status',
-                command: 'mdplan.changeStatus',
-                args: [editor.document.uri, line]
-            },
-            {
-                label: '$(arrow-both) Move Task',
-                description: 'Move to different section',
-                command: 'mdplan.moveTask',
-                args: [editor.document.uri, line, sections]
-            },
-            {
-                label: '$(add) Add Details',
-                description: 'Add subtask, comment, or code block',
-                command: 'mdplan.addTaskDetails',
-                args: [editor.document.uri, line]
-            }
-        ];
-
-        const selected = await vscode.window.showQuickPick(actions, {
-            placeHolder: 'Select task action'
-        });
-
-        if (selected) {
-            await vscode.commands.executeCommand(selected.command, ...selected.args);
-        }
+    private async cycleTaskStatus(editor: vscode.TextEditor, lineNumber: number): Promise<void> {
+        // Show status selection dropdown when clicking on checkbox
+        await vscode.commands.executeCommand(COMMANDS.CHANGE_STATUS, editor.document.uri, lineNumber);
     }
 }

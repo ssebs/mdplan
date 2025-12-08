@@ -1,4 +1,6 @@
 import * as vscode from 'vscode';
+import { REGEX_PATTERNS, VALID_STATUSES, MDPLAN_MARKER, INDENTATION } from './utils/constants';
+import { getIndentLevel } from './utils/sectionUtils';
 
 export interface Task {
     line: number;
@@ -23,12 +25,6 @@ export interface ValidationIssue {
     suggestedFix?: string;
 }
 
-const VALID_STATUSES = ['[ ]', '[wip]', '[x]', '[blocked]'];
-const TASK_REGEX = /^(\s*)-\s+\[([^\]]*)\]\s*(.*)/;
-const SECTION_REGEX = /^##\s+(.+)/;
-const COMMENT_REGEX = /^(\s*)>\s+(.+)/;
-const MDPLAN_MARKER = '<!-- mdplan -->';
-
 export class MDPlanParser {
 
     /**
@@ -42,7 +38,7 @@ export class MDPlanParser {
     }
 
     static parseTask(line: string, lineNumber: number, document: vscode.TextDocument): Task | null {
-        const match = line.match(TASK_REGEX);
+        const match = line.match(REGEX_PATTERNS.TASK);
         if (!match) {
             return null;
         }
@@ -50,11 +46,12 @@ export class MDPlanParser {
         const indent = match[1] || '';
         const statusText = match[2];
         const taskText = match[3];
-        const indentLevel = Math.floor(indent.length / 2); // Assuming 2 spaces per indent
+        const indentLevel = getIndentLevel(indent);
 
         let status: TaskStatus;
-        if (VALID_STATUSES.includes(`[${statusText}]`)) {
-            status = `[${statusText}]` as TaskStatus;
+        const statusWithBrackets = `[${statusText}]`;
+        if (VALID_STATUSES.includes(statusWithBrackets as any)) {
+            status = statusWithBrackets as TaskStatus;
         } else {
             status = TaskStatus.Invalid;
         }
@@ -80,7 +77,7 @@ export class MDPlanParser {
             const text = line.text;
 
             // Check for title (should be first non-empty line)
-            if (i === 0 && text.trim() && !text.match(/^#\s+/)) {
+            if (i === 0 && text.trim() && !text.match(REGEX_PATTERNS.TITLE)) {
                 issues.push({
                     range: line.range,
                     message: 'MDPlan files should start with a title (# Title)',
@@ -88,22 +85,22 @@ export class MDPlanParser {
                 });
             }
 
-            if (text.match(/^#\s+/)) {
+            if (text.match(REGEX_PATTERNS.TITLE)) {
                 titleLine = i;
             }
 
             // Check for sections
-            if (text.match(SECTION_REGEX)) {
+            if (text.match(REGEX_PATTERNS.SECTION)) {
                 lastSectionLine = i;
                 continue;
             }
 
             // Check for tasks
-            const taskMatch = text.match(TASK_REGEX);
+            const taskMatch = text.match(REGEX_PATTERNS.TASK);
             if (taskMatch) {
                 const indent = taskMatch[1] || '';
                 const statusText = taskMatch[2];
-                const indentLevel = Math.floor(indent.length / 2);
+                const indentLevel = getIndentLevel(indent);
 
                 // Validate task is under a section
                 if (lastSectionLine === -1) {
@@ -115,7 +112,8 @@ export class MDPlanParser {
                 }
 
                 // Validate status
-                if (!VALID_STATUSES.includes(`[${statusText}]`)) {
+                const statusWithBrackets = `[${statusText}]`;
+                if (!VALID_STATUSES.includes(statusWithBrackets as any)) {
                     const statusStart = text.indexOf('[');
                     const statusEnd = text.indexOf(']', statusStart) + 1;
                     issues.push({
@@ -130,7 +128,7 @@ export class MDPlanParser {
                 }
 
                 // Validate indentation (max 1 level of nesting)
-                if (indentLevel > 1) {
+                if (indentLevel > INDENTATION.MAX_NESTING_LEVEL) {
                     issues.push({
                         range: new vscode.Range(
                             new vscode.Position(i, 0),
@@ -143,10 +141,10 @@ export class MDPlanParser {
             }
 
             // Check for comments
-            const commentMatch = text.match(COMMENT_REGEX);
+            const commentMatch = text.match(REGEX_PATTERNS.COMMENT);
             if (commentMatch) {
                 const indent = commentMatch[1] || '';
-                const indentLevel = Math.floor(indent.length / 2);
+                const indentLevel = getIndentLevel(indent);
 
                 // Comments should be indented under a task, or be a description after the title
                 const isDescriptionUnderTitle = indentLevel === 0 && titleLine >= 0 && i > titleLine && lastSectionLine === -1;

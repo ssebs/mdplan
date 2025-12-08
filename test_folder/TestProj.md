@@ -1,6 +1,12 @@
 # TestProj
 
 ## Todo
+- [ ] new thing
+  - ```md
+    you should do this
+    ```
+  > mkay
+
 - [ ] Create the stuff in the todo lists
 - [ ] next thing
 
