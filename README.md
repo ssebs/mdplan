@@ -2,6 +2,9 @@
 
 A VSCode extension for Kanban-style planning using raw markdown files instead of rendering a separate UI.
 
+TODO:
+- when you click in the checkbox text (anywhere in [ ]) it should popup a menu to select the new status, like a dropdown menu
+
 ## Quick Start
 
 1. Create a new markdown file
