@@ -1,0 +1,103 @@
+{
+  "Task - Planned": {
+    "prefix": "task",
+    "body": [
+      "- [ ] $1"
+    ],
+    "description": "Insert a planned task"
+  },
+  "Task - In Progress": {
+    "prefix": "taskwip",
+    "body": [
+      "- [wip] $1"
+    ],
+    "description": "Insert a task in progress"
+  },
+  "Task - Done": {
+    "prefix": "taskdone",
+    "body": [
+      "- [x] $1"
+    ],
+    "description": "Insert a completed task"
+  },
+  "Task - Blocked": {
+    "prefix": "taskblocked",
+    "body": [
+      "- [blocked] $1"
+    ],
+    "description": "Insert a blocked task"
+  },
+  "Nested Task": {
+    "prefix": "subtask",
+    "body": [
+      "  - [ ] $1"
+    ],
+    "description": "Insert a nested/subtask"
+  },
+  "Section": {
+    "prefix": "section",
+    "body": [
+      "## $1",
+      "> ${2:Description}",
+      "- [ ] $3"
+    ],
+    "description": "Insert a new section with description"
+  },
+  "Comment with Timestamp": {
+    "prefix": "comment",
+    "body": [
+      "> $1 @${CURRENT_YEAR}-${CURRENT_MONTH}-${CURRENT_DATE}"
+    ],
+    "description": "Insert a comment with today's date"
+  },
+  "Comment with User": {
+    "prefix": "commentuser",
+    "body": [
+      "> $1 @${CURRENT_YEAR}-${CURRENT_MONTH}-${CURRENT_DATE} - @${2:username}"
+    ],
+    "description": "Insert a comment with date and username"
+  },
+  "MDPlan Template": {
+    "prefix": "mdplan",
+    "body": [
+      "# ${1:Project Name}",
+      "",
+      "> ${2:Project description}",
+      "",
+      "## Todo",
+      "- [ ] ${3:First task}",
+      "",
+      "## Done",
+      "",
+      "",
+      "<!-- mdplan -->"
+    ],
+    "description": "Create a new MDPlan file template"
+  },
+  "New MDPlan File": {
+    "prefix": "mdplanfile",
+    "body": [
+      "# ${1:Project Name}",
+      "",
+      "> ${2:Brief description of this project}",
+      "",
+      "## Todo",
+      "- [ ] ${3:First task}",
+      "",
+      "## Done",
+      "",
+      "",
+      "<!-- mdplan -->"
+    ],
+    "description": "Create a brand new MDPlan file with Todo and Done sections"
+  },
+  "Code Block Detail": {
+    "prefix": "detail",
+    "body": [
+      "  - \\`\\`\\`md",
+      "    ${1:Additional details here}",
+      "    \\`\\`\\`"
+    ],
+    "description": "Insert a markdown code block for task details"
+  }
+}

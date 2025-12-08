@@ -9,13 +9,41 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onLanguage:markdown"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
         "command": "mdplan.helloWorld",
         "title": "Hello World"
+      },
+      {
+        "command": "mdplan.addTask",
+        "title": "MDPlan: Add Task"
+      },
+      {
+        "command": "mdplan.moveTask",
+        "title": "MDPlan: Move Task"
+      },
+      {
+        "command": "mdplan.changeStatus",
+        "title": "MDPlan: Change Task Status"
+      },
+      {
+        "command": "mdplan.deleteTask",
+        "title": "MDPlan: Delete Task"
+      },
+      {
+        "command": "mdplan.addTaskDetails",
+        "title": "MDPlan: Add Task Details"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "markdown",
+        "path": "./snippets/mdplan.json"
       }
     ]
   },
