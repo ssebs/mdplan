@@ -37,7 +37,6 @@ export class MDPlanCommands {
         await vscode.workspace.applyEdit(edit);
     }
 
-    // TODO: fixme
     static async moveTask(uri: vscode.Uri, taskLine: number, sections: Section[]): Promise<void> {
         const document = await vscode.workspace.openTextDocument(uri);
         await vscode.window.showTextDocument(document);

@@ -75,6 +75,8 @@ export class MDPlanDecorations {
             return;
         }
 
+        const indentLevel = getIndentLevel(line.text.match(/^(\s*)/)?.[1] || '');
+
         // Find the checkbox position in the line
         const checkboxMatch = line.text.match(/^(\s*-\s+)(\[[^\]]*\])/);
         if (checkboxMatch) {
@@ -88,14 +90,14 @@ export class MDPlanDecorations {
             }
         }
 
-        // Calculate if click was in the decoration area (after the line end)
-        const lineEndPos = line.text.length;
-        const clickOffset = position.character - lineEndPos;
+        // Only show action menu for top-level tasks and if clicking after the line end
+        if (indentLevel === 0) {
+            const lineEndPos = line.text.length;
+            const clickOffset = position.character - lineEndPos;
 
-        // If click is within the decoration area (the "..." part)
-        if (clickOffset >= 0) {
-            // Directly call "Add Description" command
-            await vscode.commands.executeCommand(COMMANDS.ADD_TASK_DETAILS, editor.document.uri, position.line);
+            if (clickOffset >= 0) {
+                await vscode.commands.executeCommand(COMMANDS.ADD_TASK_DETAILS, editor.document.uri, position.line);
+            }
         }
     }
 
